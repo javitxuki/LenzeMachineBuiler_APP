@@ -1,0 +1,32 @@
+Project: C:\Temp\LenzeMachine_Auto.project
+Drives encontrados: 4
+
+============================================================
+DRIVE: Controller_Sync_Device    DEVICE: 
+============================================================
+  (ningun atributo con motor/temp/i2xt/assistant/c86 en el nombre)
+--- Device parameters (scan subindex 1..2000) ---
+  (ningun parametro con motor/temp/i2xt/c86 en el nombre)
+
+============================================================
+DRIVE: Drv_Axis_01    DEVICE: 
+============================================================
+  (ningun atributo con motor/temp/i2xt/assistant/c86 en el nombre)
+--- Device parameters (scan subindex 1..2000) ---
+  (ningun parametro con motor/temp/i2xt/c86 en el nombre)
+
+============================================================
+DRIVE: Drv_Axis_02    DEVICE: 
+============================================================
+  (ningun atributo con motor/temp/i2xt/assistant/c86 en el nombre)
+--- Device parameters (scan subindex 1..2000) ---
+  (ningun parametro con motor/temp/i2xt/c86 en el nombre)
+
+============================================================
+DRIVE: Drv_Axis_03    DEVICE: 
+============================================================
+  (ningun atributo con motor/temp/i2xt/assistant/c86 en el nombre)
+--- Device parameters (scan subindex 1..2000) ---
+  (ningun parametro con motor/temp/i2xt/c86 en el nombre)
+
+Done.

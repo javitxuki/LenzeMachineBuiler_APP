@@ -20,6 +20,16 @@ from machine_builder_core import (
     normalize_traversing_range,
 )
 
+# Los proxies corporativos (Zscaler) interceptan HTTPS con su propio CA, que no
+# esta en certifi: sin esto, descargar los modelos Whisper y llamar a OpenAI
+# fallan con "SSL: CERTIFICATE_VERIFY_FAILED". Truststore usa el almacenes de
+# certificados de Windows, que si confia en ese CA.
+try:
+    import truststore
+    truststore.inject_into_ssl()
+except Exception:
+    pass
+
 # Los mismos valores que la aplicacion: una propuesta con otros nombres ("Advanced
 # Safety", "Compact", "LINEAR") no casaba con los desplegables y reventaba la pantalla.
 SUPPORTED_CPUS = tuple(CPU_MODELS)
@@ -879,7 +889,16 @@ def interpret(prompt, current_axes, current_config=None):
 # TRANSCRIPCIÓN DE VOZ
 # ============================================================
 
-def _transcribe_audio_openai(audio_bytes, filename):
+# Información de la última transcripción (motor, modelo, idioma detectado y su
+# probabilidad) para que la interfaz la muestre. Se mutate, no se rebinda, así
+# que el importador ve siempre el mismo objeto.
+LAST_TRANSCRIPTION_INFO = {}
+
+# Modelos Whisper que la interfaz ofrece para el motor local.
+WHISPER_MODELS = ("tiny", "base", "small", "medium", "large-v3")
+
+
+def _transcribe_audio_openai(audio_bytes, filename, language=None):
     """Transcribe el audio mediante la API de OpenAI."""
     key = os.getenv("OPENAI_API_KEY", "").strip()
     if not key:
@@ -887,60 +906,117 @@ def _transcribe_audio_openai(audio_bytes, filename):
     from openai import OpenAI
     stream = io.BytesIO(audio_bytes)
     stream.name = filename
-    result = OpenAI(api_key=key).audio.transcriptions.create(
-        model=os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
-        file=stream,
-    )
+    options = {
+        "model": os.getenv("OPENAI_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
+        "file": stream,
+    }
+    if language:
+        options["language"] = language
+    result = OpenAI(api_key=key).audio.transcriptions.create(**options)
     text = str(result.text or "").strip()
     if not text:
         raise ValueError("OpenAI no devolvió ninguna transcripción.")
+    LAST_TRANSCRIPTION_INFO.clear()
+    LAST_TRANSCRIPTION_INFO.update({
+        "engine": "openai",
+        "model": options["model"],
+        "language": language or "",
+        "language_probability": None,
+    })
     return text
 
 
-def _local_whisper_settings():
+def _local_whisper_settings(model=None):
     return (
-        os.getenv("WHISPER_MODEL", "small").strip() or "small",
+        str(model or os.getenv("WHISPER_MODEL", "small")).strip() or "small",
         os.getenv("WHISPER_DEVICE", "cpu").strip() or "cpu",
         os.getenv("WHISPER_COMPUTE_TYPE", "int8").strip() or "int8",
     )
 
 
-def _local_whisper_model():
-    """Carga y conserva una única instancia de Faster-Whisper por proceso."""
-    settings = _local_whisper_settings()
+def _local_whisper_model(model=None):
+    """Carga y conserva una única instancia de Whisper (OpenAI) por modelo.
+
+    Los modelos se descargan de openaipublic.azureedge.net (no de Hugging Face,
+    que el proxy corporativo bloquea con 403)."""
+    settings = _local_whisper_settings(model)
     if getattr(_local_whisper_model, "_settings", None) != settings:
-        from faster_whisper import WhisperModel
-        _local_whisper_model._model = WhisperModel(
-            settings[0], device=settings[1], compute_type=settings[2]
-        )
+        import whisper
+        try:
+            _local_whisper_model._model = whisper.load_model(
+                settings[0], device=settings[1]
+            )
+        except Exception as error:
+            raise RuntimeError(
+                "No se pudo cargar el modelo Whisper '%s' (%s). Comprueba la "
+                "conexion: los modelos se descargan de openaipublic.azureedge.net."
+                % (settings[0], error)
+            )
         _local_whisper_model._settings = settings
     return _local_whisper_model._model
 
 
-def _transcribe_audio_local(audio_bytes, filename):
-    """Transcribe localmente con Faster-Whisper, sin utilizar API."""
+def _wav_to_array(audio_bytes):
+    """Decodifica un WAV PCM16 a float32 16 kHz mono sin necesitar ffmpeg.
+
+    La grabación del micrófono siempre produce WAV PCM16; Whisper carga el
+    audio con ffmpeg, que no siempre está instalado, así que se decodifica aquí
+    con la biblioteca estándar y se le pasa el array a Whisper."""
+    import wave as _wave
+    import numpy as np
+    with _wave.open(io.BytesIO(audio_bytes), "rb") as wav:
+        channels = wav.getnchannels()
+        width = wav.getsampwidth()
+        rate = wav.getframerate()
+        frames = wav.readframes(wav.getnframes())
+    if width != 2:
+        raise ValueError("Formato de audio no soportado (%d bytes por muestra)." % width)
+    data = np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+    if channels > 1:
+        data = data.reshape(-1, channels).mean(axis=1)
+    if rate != 16000 and data.shape[0] > 1:
+        target = int(round(data.shape[0] * 16000.0 / rate))
+        if target > 1:
+            positions = np.linspace(0, data.shape[0] - 1, target)
+            data = np.interp(positions, np.arange(data.shape[0]), data).astype(np.float32)
+    return data
+
+
+def _transcribe_audio_local(audio_bytes, filename, model=None, language=None):
+    """Transcribe localmente con Whisper (OpenAI), sin utilizar API.
+
+    language None o vacío → auto-detección de idioma (lo devuelve info)."""
     import tempfile
     from pathlib import Path
     suffix = Path(filename or "audio.wav").suffix or ".wav"
     temp_path = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_audio:
-            temp_audio.write(audio_bytes)
-            temp_path = temp_audio.name
-        language = os.getenv("WHISPER_LANGUAGE", "es").strip() or None
-        segments, _ = _local_whisper_model().transcribe(
-            temp_path,
-            language=language,
-            vad_filter=True,
-            beam_size=5,
+        try:
+            audio_input = _wav_to_array(audio_bytes)
+        except Exception:
+            # Si no es un WAV PCM decodificable, se deja que Whisper lo cargue
+            # (requiere ffmpeg) desde el fichero temporal.
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_audio:
+                temp_audio.write(audio_bytes)
+                temp_path = temp_audio.name
+            audio_input = temp_path
+        selected_language = str(language or "").strip() or None
+        device = _local_whisper_settings(model)[1]
+        result = _local_whisper_model(model).transcribe(
+            audio_input,
+            language=selected_language,
+            fp16=device != "cpu",
         )
-        text = " ".join(
-            segment.text.strip()
-            for segment in segments
-            if segment.text and segment.text.strip()
-        ).strip()
+        text = str(result.get("text") or "").strip()
         if not text:
             raise ValueError("No se ha detectado voz en el audio.")
+        LAST_TRANSCRIPTION_INFO.clear()
+        LAST_TRANSCRIPTION_INFO.update({
+            "engine": "local",
+            "model": _local_whisper_settings(model)[0],
+            "language": str(result.get("language") or ""),
+            "language_probability": None,
+        })
         return text
     finally:
         if temp_path:
@@ -950,13 +1026,20 @@ def _transcribe_audio_local(audio_bytes, filename):
                 pass
 
 
-def transcribe_audio(audio_bytes, filename="audio.wav", engine="local"):
-    """Transcribe con Faster-Whisper local o con la API de OpenAI."""
+def transcribe_audio(audio_bytes, filename="audio.wav", engine="local",
+                     model=None, language=None):
+    """Transcribe con Whisper local o con la API de OpenAI.
+
+    model: modelo Whisper del motor local (None → WHISPER_MODEL o "small").
+    language: código ISO ("es", "en", "de") o None para auto-detectar."""
     if not audio_bytes:
         raise ValueError("No se recibió audio.")
     selected_engine = str(engine or "local").strip().lower()
+    LAST_TRANSCRIPTION_INFO.clear()
     if selected_engine == "local":
-        return _transcribe_audio_local(audio_bytes, filename)
+        return _transcribe_audio_local(audio_bytes, filename,
+                                       model=model, language=language)
     if selected_engine == "openai":
-        return _transcribe_audio_openai(audio_bytes, filename)
+        return _transcribe_audio_openai(audio_bytes, filename,
+                                        language=language)
     raise ValueError("Motor no reconocido. Usa 'local' u 'openai'.")

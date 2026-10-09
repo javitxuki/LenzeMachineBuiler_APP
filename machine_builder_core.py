@@ -218,6 +218,135 @@ def robot_parameter_errors(group):
     return errors
 
 
+# Subíndices de los parámetros geométricos de cada Robot Group en PLC Designer.
+# El grupo los expone con el mismo esquema que los datos de maquina del eje:
+# Id = 0x10000000 + subíndice.
+#
+# El indice visible del GUI (0x52xx:sss) no es el subíndice: el prefijo vale
+# 0x5200 + 4*instancia + bloque (bloque = subíndice >> 8) y la parte sss es el
+# byte bajo en decimal. Los parámetros geométricos están en el BLOQUE 3, asi
+# que su subíndice real es 0x300 + n (n = numero tras los dos puntos):
+#   Arm Length L1 de Delta  se ve como 0x5203:002  ->  sub 0x302  ->  Id 0x10000302
+# Confirmado con Export_KinematicsParameters.py sobre un proyecto generado.
+# Acepta dos formas, mezclables: global {"arm_length_l1": 62, ...} o por tipo
+# {"DELTA": {"arm_length_l1": 62, ...}} (una clave cuyo valor es un dict = tipo).
+ROBOT_PARAMETER_IDS = {
+    "DELTA_2DOF": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+    },
+    "DELTA": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+        "parallelogram_width_d": 0x306,
+    },
+    "DELTA_4DOF": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+        "parallelogram_width_d": 0x306,
+    },
+    "DELTA_5DOF": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+        "parallelogram_width_d": 0x306,
+        "vertical_tcp_offset_l3": 0x307,
+        "horizontal_tcp_offset_l4": 0x308,
+        "flange_length_l5": 0x309,
+        "axis_offset_a4offx": 0x30A,
+        "axis_offset_a4offy": 0x30B,
+    },
+    "SCARA_3DOF": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+    },
+    "SCARA": {
+        "arm_length_l1": 0x302,
+        "arm_length_l2": 0x303,
+    },
+    "BELT_2DOF": {
+        "feed_constant": 0x302,
+    },
+    "PORTAL_AC_5DOF": {
+        "axis_offset_a5offx": 0x302,
+        "axis_offset_a5offy": 0x303,
+        "axis_offset_a5offz": 0x304,
+        "flange_length_l": 0x308,
+    },
+    "LINEAR_DELTA_3DOF": {
+        "linear_angle_a": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+        "parallelogram_width_d": 0x306,
+    },
+    "LINEAR_DELTA_4DOF": {
+        "linear_angle_a": 0x302,
+        "arm_length_l2": 0x303,
+        "base_radius_rbase": 0x304,
+        "end_effector_radius_rtcp": 0x305,
+        "parallelogram_width_d": 0x306,
+    },
+    "ARTICULATED_4DOF": {
+        "arm_length_l1": 0x303,
+        "arm_length_l2": 0x305,
+        "axis_offset_a2off": 0x302,
+        "axis_offset_a3off": 0x304,
+        "axis_offset_a4off": 0x306,
+        "mounting_a3": 0x30A,
+    },
+    "ARTICULATED_LINEAR_A1_4DOF": {
+        "arm_length_l1": 0x303,
+        "arm_length_l2": 0x305,
+        "axis_offset_a2off": 0x302,
+        "axis_offset_a4off": 0x306,
+        "mounting_a3": 0x30A,
+    },
+}
+
+
+def _robot_parameter_id_map(kind):
+    """Ids aplicables a un tipo de grupo: mezcla los globales con los del tipo."""
+    merged = {}
+    per_kind = None
+    for key, value in ROBOT_PARAMETER_IDS.items():
+        if isinstance(value, dict):
+            if key == kind:
+                per_kind = value
+            continue
+        merged[key] = value
+    if per_kind:
+        merged.update(per_kind)
+    return merged
+
+
+def robot_parameter_ids(kind, group_parameters=None):
+    """{clave: subíndice} de los parámetros conocidos para un grupo."""
+    known = _robot_parameter_id_map(kind)
+    ids = {}
+    for key in (group_parameters or {}):
+        try:
+            ids[key] = int(known[key])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return ids
+
+
+def robot_parameter_labels(kind):
+    """{clave: etiqueta PLC Designer} para escribir el parámetro por nombre."""
+    return {
+        definition["key"]: definition["label"]
+        for definition in robot_parameter_definitions(kind)
+    }
+
+
 # Tipos que tenían versiones anteriores de la herramienta y no tienen cinemática
 # Lenze equivalente: se avisa en vez de crear algo que no es.
 UNSUPPORTED_ROBOT_TYPES = ("GANTRY", "ARTICULATED_6_AXIS", "CUSTOM")
@@ -255,6 +384,7 @@ class AxisConfig:
     station_alias: int = 1001
     second_station_alias: int = 2001
     motor_code_c86: str = ""
+    motor_template: bool = False
     kinematics: str = "ROTARY"
     kinematic_parameter: float = 360.0
     z1: int = 1
@@ -365,6 +495,7 @@ def normalize_axis(axis, index=1):
         except Exception:
             pass
     base["motor_code_c86"] = str(base["motor_code_c86"] or "")
+    base["motor_template"] = bool(base.get("motor_template", False))
     return base
 
 
@@ -595,12 +726,14 @@ except ImportError:
     pass
 
 PROJECT_PATH = __PROJECT_PATH__
+REPORT_PATH = PROJECT_PATH + ".log"
 CPU_MODEL = __CPU_MODEL__
 CPU_DEVICE_ID = __CPU_DEVICE_ID__
 ETHERCAT_MASTER_DEVICE_ID = __MASTER_DEVICE_ID__
 AXES = __AXES__
 ROBOT_GROUPS = __ROBOT_GROUPS__
 UNSUPPORTED_GROUPS = __UNSUPPORTED_GROUPS__
+HOT_CONNECT_GROUPS = __HOT_CONNECT_GROUPS__
 # 0 none, 1 Configured Station Alias (ADO 0x0012), 2 Explicit Device ID (ADO 0x0134)
 IDENTIFICATION_MODE = __IDENTIFICATION_MODE__
 
@@ -630,15 +763,64 @@ LINK_NAME = 24
 
 WARNINGS = []
 DONE = []
+LINES = []
 
 
 def log(text):
-    print("[Machine Builder] " + str(text))
+    text = "[Machine Builder] " + str(text)
+    LINES.append(text)
+    print(text)
 
 
 def warn(text):
     WARNINGS.append(text)
     log("WARNING: " + text)
+
+
+def safe(function, default=""):
+    try:
+        return function()
+    except Exception:
+        return default
+
+
+def child_nodes(node):
+    """Best effort list of the children of a node (the API differs per object)."""
+    for attribute in ("children", "get_children", "get_all_children",
+                      "nodes", "items"):
+        items = safe(lambda a=attribute: list(getattr(node, a)()), None)
+        if not items:
+            items = safe(lambda a=attribute: list(getattr(node, a)), None)
+        if items:
+            return items
+    return safe(lambda: list(node), [])
+
+
+def object_name(obj):
+    for attr in ("get_name", "name", "Name"):
+        val = safe(lambda a=attr: getattr(obj, a))
+        if val:
+            if callable(val):
+                try:
+                    val = val()
+                except Exception:
+                    continue
+            if val:
+                return str(val)
+    return ""
+
+
+def write_report():
+    """Writes the whole script log next to the project (PROJECT_PATH + '.log')."""
+    try:
+        report = open(REPORT_PATH, "w")
+        try:
+            report.write("\n".join(LINES) + "\n")
+        finally:
+            report.close()
+        print("[Machine Builder] Report: " + REPORT_PATH)
+    except Exception:
+        pass
 
 
 def exact_device(search_text, expected_id):
@@ -817,9 +999,35 @@ def build(application):
         warn("The build reported a problem (" + str(error) + ")")
 
 
-def set_parameter(device, label, key, value):
+def write_parameter(parameter, label, key, value):
+    """Writes a parameter object and reads it back. Returns True if it holds."""
+    text = str(value)
+    try:
+        number = float(text)
+        if number == int(number) and abs(number) < 1e15:
+            text = str(int(number))
+    except ValueError:
+        pass
+    try:
+        parameter.value = text
+        now = str(parameter.value)
+    except Exception as error:
+        warn(label + ": could not write " + key + " = " + text + " (" + str(error) + ")")
+        return False
+    try:
+        same = abs(float(now) - float(text)) < 1e-9
+    except ValueError:
+        same = now.strip().upper() == text.strip().upper()
+    if not same:
+        warn(label + ": " + key + " was written as " + text + " but reads " + now)
+        return False
+    return True
+
+
+def set_parameter(device, label, key, value, pid=None):
     """Writes a parameter by Id and reads it back. Returns True if it holds."""
-    pid = PARAMETER_BASE + PARAMETERS[key]
+    if pid is None:
+        pid = PARAMETER_BASE + PARAMETERS[key]
     try:
         parameter = device.device_parameters.by_id(pid)
     except Exception:
@@ -827,23 +1035,147 @@ def set_parameter(device, label, key, value):
     if parameter is None:
         warn(label + ": parameter " + key + " (Id 0x%08X) does not exist" % pid)
         return False
-    try:
-        parameter.value = value
-        now = str(parameter.value)
-    except Exception as error:
-        warn(label + ": could not write " + key + " = " + value + " (" + str(error) + ")")
-        return False
-    try:
-        same = abs(float(now) - float(value)) < 1e-9
-    except ValueError:
-        same = now.strip().upper() == value.strip().upper()
-    if not same:
-        warn(label + ": " + key + " was written as " + value + " but reads " + now)
-        return False
-    return True
+    return write_parameter(parameter, label, key, value)
 
 
-def link_axis(axis, drive_name):
+def group_parameter_by_name(group, label):
+    """A group parameter by its name, used while its Id is unknown."""
+    try:
+        for parameter in group.device_parameters:
+            for attribute in ("name", "label", "display_name", "Name", "Description"):
+                try:
+                    value = getattr(parameter, attribute)
+                except Exception:
+                    continue
+                if value not in (None, "") and str(value).lower() == label.lower():
+                    return parameter
+    except Exception:
+        return None
+    return None
+
+
+def write_group_parameters(created):
+    """Writes the geometric parameters of each robot group (Arm Length L1, ...).
+
+    Their parameters appear with the build, like the axis ones, so this runs
+    after it. A parameter whose Id is unknown is matched by name; if that fails
+    too, it is reported as a warning."""
+    for g, group in created:
+        values = g.get("group_parameters") or {}
+        if not values:
+            continue
+        ids = g.get("parameter_ids") or {}
+        labels = g.get("parameter_labels") or {}
+        ok = 0
+        for key in sorted(values.keys()):
+            value = values[key]
+            text = "TRUE" if value is True else ("FALSE" if value is False else str(value))
+            try:
+                number = float(text)
+                if number == int(number) and abs(number) < 1e15:
+                    text = str(int(number))
+            except ValueError:
+                pass
+            if key in ids:
+                pid = PARAMETER_BASE + ids[key]
+                written = set_parameter(group, g["name"], key, text, pid)
+                log("%s: %s (Id 0x%08X) = %s -> %s"
+                    % (g["name"], key, pid, text, "OK" if written else "FAILED"))
+            else:
+                label = labels.get(key, key)
+                parameter = group_parameter_by_name(group, label)
+                if parameter is None:
+                    warn(g["name"] + ": parameter '" + key + "' has no known Id and "
+                         "no parameter named '" + str(label) + "'")
+                    written = False
+                else:
+                    written = write_parameter(parameter, g["name"], key, text)
+                log("%s: %s (by name '%s') = %s -> %s"
+                    % (g["name"], key, label, text, "OK" if written else "FAILED"))
+            if written:
+                ok += 1
+        DONE.append("%s: %d/%d geometric parameters written"
+                    % (g["name"], ok, len(values)))
+
+
+def create_hot_connect_groups(master, project):
+    """Creates Hot Connect groups in the EtherCAT Master and configures Second Station Address."""
+    if not HOT_CONNECT_GROUPS:
+        return []
+
+    created = []
+    for group in HOT_CONNECT_GROUPS:
+        group_name = group.get("name", "")
+        axis_names = group.get("axes", [])
+        if not group_name or not axis_names:
+            continue
+
+        # Create the Hot Connect group in the EtherCAT Master
+        try:
+            # Try multiple possible names for Hot Connect node
+            hot_connect = None
+            hc_names = ["Hot Connect", "HotConnect", "Hot Connect Groups", "HC Groups", "Hot_Connect"]
+            for hc_name in hc_names:
+                hot_connect = find_one(master, hc_name)
+                if hot_connect is not None:
+                    log("Found Hot Connect node: " + hc_name)
+                    break
+
+            # If not found, try to create it
+            if hot_connect is None:
+                for hc_name in hc_names:
+                    try:
+                        master.add(hc_name, "Hot Connect")
+                        hot_connect = find_one(master, hc_name)
+                        if hot_connect is not None:
+                            log("Created Hot Connect node: " + hc_name)
+                            break
+                    except Exception:
+                        pass
+
+            # Debug: list all children of master if still not found
+            if hot_connect is None:
+                children = child_nodes(master)
+                child_names = [object_name(c) for c in children]
+                warn("Hot Connect node not found in EtherCAT Master. Available children: " + str(child_names))
+                continue
+
+            # Add the group to Hot Connect
+            hc_group = hot_connect.add(group_name)
+            if hc_group is None:
+                warn("Could not create Hot Connect group: " + group_name)
+                continue
+
+            created.append((group_name, axis_names))
+
+            # Configure Second Station Address for each axis in the group
+            for axis_name in axis_names:
+                drive_name = "Drv_" + axis_name
+                drive = find_one(projects.primary, drive_name)
+                if drive is None:
+                    continue
+
+                # Find the axis in AXES to get its second_station_alias
+                second_alias = 0
+                for a in AXES:
+                    if a["name"] == axis_name:
+                        second_alias = a.get("second_station_alias", 0)
+                        break
+
+                if second_alias > 0:
+                    # Set Second Station Address on the drive
+                    try:
+                        param = drive.device_parameters.by_id(0x40110002)  # ETC_STATION_ALIAS
+                        if param:
+                            param.value = second_alias
+                            log("%s: Second Station Address set to %d" % (drive_name, second_alias))
+                    except Exception as error:
+                        warn("%s: could not set Second Station Address (%s)" % (drive_name, error))
+
+        except Exception as error:
+            warn("Error creating Hot Connect group %s: %s" % (group_name, error))
+
+    return created
     """Links the axis object to its drive (connection parameters of the axis)."""
     values = {
         LINK_ECAT_REFERENCE: "'" + drive_name + "'",
@@ -942,6 +1274,9 @@ def main():
         raise Exception("Controller Sync Device not found in the repository.")
     master.add("Controller_Sync_Device", sync_desc.device_id)
 
+    # Create Hot Connect groups in the EtherCAT Master
+    hot_connect_groups_created = create_hot_connect_groups(master, project)
+
     automatic = axis_insert_without_dialog()
     axes = []
     for a in AXES:
@@ -964,6 +1299,7 @@ def main():
 
     build(application)
     connect_groups(groups)
+    write_group_parameters(groups)
 
     for a, drive_name, axis in axes:
         try:
@@ -991,6 +1327,7 @@ def main():
     log("RESULT: " + ("OK" if not WARNINGS else "DONE WITH %d WARNING(S)" % len(WARNINGS)))
     for line in WARNINGS:
         log("  - " + line)
+    write_report()
 
 
 try:
@@ -998,6 +1335,7 @@ try:
 except Exception as error:
     log("ERROR: " + str(error))
     traceback.print_exc()
+    write_report()
     raise
 '''
 
@@ -1018,6 +1356,7 @@ def generate_plc_script(cfg):
             "station_alias": int(a["station_alias"]),
             "second_station_alias": int(a["second_station_alias"]),
             "machine_data": axis_machine_data(a),
+            "motor_code_c86": a.get("motor_code_c86", ""),
         })
     groups = []
     unsupported = []
@@ -1030,9 +1369,13 @@ def generate_plc_script(cfg):
         groups.append({"name": normalized_group["name"], "type": kind,
                        "device": list(ROBOT_DEVICES[kind]),
                        "order": group_axis_order(normalized_group),
-                       "group_parameters": normalized_group["group_parameters"]})
+                       "group_parameters": normalized_group["group_parameters"],
+                       "parameter_ids": robot_parameter_ids(
+                           kind, normalized_group["group_parameters"]),
+                       "parameter_labels": robot_parameter_labels(kind)})
     mode = IDENTIFICATION_MODES.get(str(cfg.get("ethercat_identification", "NONE")), 0)
     script = SCRIPT_TEMPLATE
+    hot_connect_groups = cfg.get("hot_connect_groups", [])
     for token, value in (
         ("__PROJECT_PATH__", str(cfg["project_path"]).strip()),
         ("__CPU_MODEL__", cfg["cpu_model"]),
@@ -1041,6 +1384,7 @@ def generate_plc_script(cfg):
         ("__AXES__", axes),
         ("__ROBOT_GROUPS__", groups),
         ("__UNSUPPORTED_GROUPS__", unsupported),
+        ("__HOT_CONNECT_GROUPS__", hot_connect_groups),
         ("__IDENTIFICATION_MODE__", mode),
         ("__PARAMETERS__", AXIS_PARAMETERS),
     ):

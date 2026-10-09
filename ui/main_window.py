@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (QCheckBox,QComboBox,QDoubleSpinBox,QFileDialog,QF
 from ui.robot_groups_tab import RobotGroupsTab
 from ui.generation_tab import GenerationTab
 from ui.ai_assistant_tab import AIAssistantTab
+from ui.hot_connect_tab import HotConnectTab
+from ui.scroll_area import make_scroll_area
 from machine_builder_core import (CPU_MODELS,DRIVES,I950_VARIANTS,KINEMATICS,SAFETY,TRAVERSING,calculate_feed_constant,cpu_options,drive_options,load_repository,master_options,normalize_axis)
 
 
@@ -105,13 +107,14 @@ class MainWindow(QMainWindow):
         root.addWidget(header)
 
         self.tabs=QTabWidget(); root.addWidget(self.tabs,1)
-        self.controller=QWidget(); self.axes_page=QWidget(); self.robot_groups_page=RobotGroupsTab(self.active_axis_names); self.generation_page=GenerationTab(self.config); self.ai_page=AIAssistantTab(self.config, self.apply_ai_proposal)
-        self.tabs.addTab(self.controller,'⚙ Controlador')
+        self.controller=QWidget(); self.axes_page=QWidget(); self.robot_groups_page=RobotGroupsTab(self.active_axis_names); self.hot_connect_page=HotConnectTab(self.get_axes_for_hot_connect); self.generation_page=GenerationTab(self.config); self.ai_page=AIAssistantTab(self.config, self.apply_ai_proposal)
+        self._controller_ui(); self._axes_ui()
+        self.tabs.addTab(make_scroll_area(self.controller),'⚙ Controlador')
         self.tabs.addTab(self.axes_page,'🔧 Ejes')
         self.tabs.addTab(self.robot_groups_page,'🤖 Robot Groups')
+        self.tabs.addTab(self.hot_connect_page,'🔗 Hot Connect')
         self.tabs.addTab(self.generation_page,'💾 Validar y generar')
         self.tabs.addTab(self.ai_page,'✨ Asistente IA')
-        self._controller_ui(); self._axes_ui()
 
     def _controller_ui(self):
         out=QVBoxLayout(self.controller); card=QFrame(); card.setObjectName('card'); f=QFormLayout(card)
@@ -195,7 +198,8 @@ class MainWindow(QMainWindow):
         bottom=QHBoxLayout(); bottom.addWidget(motion,2); bottom.addWidget(gears,1)
         editor_layout.addLayout(bottom)
         editor_layout.addStretch()
-        root.addWidget(editor,1)
+        # El editor del eje va con scroll: en pantallas bajas los cuatro grupos no caben.
+        root.addWidget(make_scroll_area(editor),1)
 
         self.drive.currentTextChanged.connect(self.filter_changed)
         self.safety.currentTextChanged.connect(self.filter_changed)
@@ -285,6 +289,8 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, "robot_groups_page"):
             self.robot_groups_page.refresh_axes()
+        if hasattr(self, "hot_connect_page"):
+            self.hot_connect_page.refresh_axes()
 
     def remove_axis(self):
         row = self.axis_list.currentRow()
@@ -305,6 +311,8 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, "robot_groups_page"):
             self.robot_groups_page.refresh_axes()
+        if hasattr(self, "hot_connect_page"):
+            self.hot_connect_page.refresh_axes()
 
     def refresh_axis_list(self, selected_row=None):
         if selected_row is None:
@@ -416,13 +424,32 @@ class MainWindow(QMainWindow):
             if axis.get("enabled", True) and axis.get("name", "").strip()
         ]
 
+    def get_axes_for_hot_connect(self):
+        """Devuelve lista completa de ejes (dicts) para Hot Connect."""
+        return [
+            a for a in self.axes
+            if a.get("enabled", True) and a.get("name", "").strip()
+        ]
+
     def calc_feed(self):
         try: self.feed.setValue(calculate_feed_constant(self.kin.currentText(),self.kparam.value()))
         except Exception as e: QMessageBox.warning(self,'Error',str(e))
+
     def config(self):
-        self.store_axis(); c=self.cpu_desc.currentData() or {}; m=self.master_desc.currentData() or {}; return {'format':'LenzeMachineBuilderDesktop','format_version':2,'cpu_model':self.cpu.currentText(),'cpu_version':c.get('version',''),'cpu_device_id':c.get('device_id',''),'ethercat_master_version':m.get('version',''),'ethercat_master_device_id':m.get('device_id',''),'project_path':self.project.text().strip(),'axes':deepcopy(self.axes),'robot_groups':self.robot_groups_page.configuration()}
+        self.store_axis()
+        cfg = {'format':'LenzeMachineBuilderDesktop','format_version':2,
+               'cpu_model':self.cpu.currentText(),
+               'cpu_version':(self.cpu_desc.currentData() or {}).get('version',''),
+               'cpu_device_id':(self.cpu_desc.currentData() or {}).get('device_id',''),
+               'ethercat_master_version':(self.master_desc.currentData() or {}).get('version',''),
+               'ethercat_master_device_id':(self.master_desc.currentData() or {}).get('device_id',''),
+               'project_path':self.project.text().strip(),
+               'axes':deepcopy(self.axes),
+               'robot_groups':self.robot_groups_page.configuration(),
+               'hot_connect_groups':self.hot_connect_page.configuration()}
+        return cfg
     def load_config(self,c):
-        self.cpu.setCurrentText(c.get('cpu_model','c550')); self.refresh_cpu(); self._fill(self.cpu_desc,cpu_options(self.repo,self.cpu.currentText()),c.get('cpu_device_id','')); self._fill(self.master_desc,master_options(self.repo),c.get('ethercat_master_device_id','')); self.project.setText(c.get('project_path',r'C:\Temp\LenzeMachine_Auto.project')); self.axes=[normalize_axis(a,i) for i,a in enumerate(c.get('axes',[]),1)] or [normalize_axis({},1)]; self.axis_index=-1; self.refresh_axis_list(); self.axis_list.setCurrentRow(0); self.robot_groups_page.load_configuration(c.get('robot_groups',[]))
+        self.cpu.setCurrentText(c.get('cpu_model','c550')); self.refresh_cpu(); self._fill(self.cpu_desc,cpu_options(self.repo,self.cpu.currentText()),c.get('cpu_device_id','')); self._fill(self.master_desc,master_options(self.repo),c.get('ethercat_master_device_id','')); self.project.setText(c.get('project_path',r'C:\Temp\LenzeMachine_Auto.project')); self.axes=[normalize_axis(a,i) for i,a in enumerate(c.get('axes',[]),1)] or [normalize_axis({},1)]; self.axis_index=-1; self.refresh_axis_list(); self.axis_list.setCurrentRow(0); self.robot_groups_page.load_configuration(c.get('robot_groups',[])); self.hot_connect_page.load_configuration(c.get('hot_connect_groups',[]))
     def apply_ai_proposal(self, proposal):
         current = self.config()
         proposed_axes = proposal.get("axes")

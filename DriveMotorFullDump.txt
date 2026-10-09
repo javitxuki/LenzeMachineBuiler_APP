@@ -1,0 +1,104 @@
+Project: C:\Temp\LenzeMachine_Auto.project
+Drives bajo master: 4
+
+============================================================
+OBJECT: Drive_0  (Controller_Sync_Device)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+OBJECT: Drive_1  (Drv_Axis_01)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Drive_1_FULL
+============================================================
+Total params found: 0
+  Hijos del drive: 2
+    -> Hijo: Drv_Axis_01_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_01_Conn  (Drv_Axis_01_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_01_Conn
+============================================================
+Total params found: 0
+    -> Hijo: Drv_Axis_01_Enc_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_01_Enc_Conn  (Drv_Axis_01_Enc_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_01_Enc_Conn
+============================================================
+Total params found: 0
+
+============================================================
+OBJECT: Drive_2  (Drv_Axis_02)
+============================================================
+  (ningun atributo con palabras clave de motor)
+  Hijos del drive: 2
+    -> Hijo: Drv_Axis_02_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_02_Conn  (Drv_Axis_02_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_02_Conn
+============================================================
+Total params found: 0
+    -> Hijo: Drv_Axis_02_Enc_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_02_Enc_Conn  (Drv_Axis_02_Enc_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_02_Enc_Conn
+============================================================
+Total params found: 0
+
+============================================================
+OBJECT: Drive_3  (Drv_Axis_03)
+============================================================
+  (ningun atributo con palabras clave de motor)
+  Hijos del drive: 2
+    -> Hijo: Drv_Axis_03_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_03_Conn  (Drv_Axis_03_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_03_Conn
+============================================================
+Total params found: 0
+    -> Hijo: Drv_Axis_03_Enc_Conn
+
+============================================================
+OBJECT: DriveChild_Drv_Axis_03_Enc_Conn  (Drv_Axis_03_Enc_Conn)
+============================================================
+  (ningun atributo con palabras clave de motor)
+
+============================================================
+FULL PARAM DUMP: Child_Drv_Axis_03_Enc_Conn
+============================================================
+Total params found: 0
+
+Objetos bajo Application: 5
+
+============================================================
+BUSQUEDA GLOBAL DE OBJETOS CON 'MOTOR'
+============================================================
+
+Done.

@@ -1,0 +1,348 @@
+Project: C:\Temp\LenzeMachine_Auto.project
+Drives bajo master: 4
+
+============================================================
+DRIVE 0: Controller_Sync_Device
+============================================================
+
+============================================================
+COLLECTION: Drive_0
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Drive_0  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+
+============================================================
+DRIVE 1: Drv_Axis_01
+============================================================
+
+============================================================
+COLLECTION: Drive_1
+============================================================
+  ID=270532864  NAME=0x2001:0  VALUE=Drv_Axis_01
+  ID=271070726  NAME=0x2836:6  VALUE=314.86
+  ID=271070727  NAME=0x2836:7  VALUE=5.82
+  ID=271122433  NAME=0x2900:1  VALUE=0.00071
+  ID=271122434  NAME=0x2900:2  VALUE=12.8
+  ID=271122435  NAME=0x2900:3  VALUE=0
+  ID=271123200  NAME=0x2903:0  VALUE=0
+  ID=271123456  NAME=0x2904:0  VALUE=0.3
+  ID=271126529  NAME=0x2910:1  VALUE=0.22
+  ID=271139072  NAME=0x2941:0  VALUE=1
+  ID=271139329  NAME=0x2942:1  VALUE=314.86
+  ID=271139330  NAME=0x2942:2  VALUE=5.82
+  ID=271139584  NAME=0x2943:0  VALUE=0
+  ID=271140609  NAME=0x2947:1  VALUE=0
+  ID=271140610  NAME=0x2947:2  VALUE=0.63
+  ID=271140611  NAME=0x2947:3  VALUE=0.75
+  ID=271140612  NAME=0x2947:4  VALUE=0.84
+  ID=271140613  NAME=0x2947:5  VALUE=0.86
+  ID=271140614  NAME=0x2947:6  VALUE=0.92
+  ID=271140615  NAME=0x2947:7  VALUE=1.07
+  ID=271140616  NAME=0x2947:8  VALUE=1.12
+  ID=271140617  NAME=0x2947:9  VALUE=1.43
+  ID=271140618  NAME=0x2947:10  VALUE=1.59
+  ID=271140619  NAME=0x2947:11  VALUE=1.77
+  ID=271140620  NAME=0x2947:12  VALUE=1.82
+  ID=271140621  NAME=0x2947:13  VALUE=1.92
+  ID=271140622  NAME=0x2947:14  VALUE=2.05
+  ID=271140623  NAME=0x2947:15  VALUE=2.14
+  ID=271140624  NAME=0x2947:16  VALUE=2.14
+  ID=271140625  NAME=0x2947:17  VALUE=2.14
+  ID=271253761  NAME=0x2B01:1  VALUE=320
+  ID=271253762  NAME=0x2B01:2  VALUE=270
+  ID=271254528  NAME=0x2B04:0  VALUE=0.75
+  ID=271254785  NAME=0x2B05:1  VALUE=314.86
+  ID=271254786  NAME=0x2B05:2  VALUE=5.82
+  ID=271319040  NAME=0x2C00:0  VALUE=1
+  ID=271319298  NAME=0x2C01:2  VALUE=10.9
+  ID=271319299  NAME=0x2C01:3  VALUE=63.48
+  ID=271319300  NAME=0x2C01:4  VALUE=4050
+  ID=271319301  NAME=0x2C01:5  VALUE=270
+  ID=271319302  NAME=0x2C01:6  VALUE=0.51
+  ID=271319303  NAME=0x2C01:7  VALUE=320
+  ID=271319304  NAME=0x2C01:8  VALUE=0.83
+  ID=271319305  NAME=0x2C01:9  VALUE=4
+  ID=271319306  NAME=0x2C01:10  VALUE=MCS06F41
+  ID=271319557  NAME=0x2C02:5  VALUE=1000000
+  ID=271319809  NAME=0x2C03:1  VALUE=68.6
+  ID=271319811  NAME=0x2C03:3  VALUE=-0.11
+  ID=271319813  NAME=0x2C03:5  VALUE=63.48
+  ID=271319814  NAME=0x2C03:6  VALUE=63.48
+  ID=271320065  NAME=0x2C04:1  VALUE=165
+  ID=271320066  NAME=0x2C04:2  VALUE=213
+  ID=271320067  NAME=0x2C04:3  VALUE=169
+  ID=271320068  NAME=0x2C04:4  VALUE=137
+  ID=271320069  NAME=0x2C04:5  VALUE=117
+  ID=271320070  NAME=0x2C04:6  VALUE=102
+  ID=271320071  NAME=0x2C04:7  VALUE=90
+  ID=271320072  NAME=0x2C04:8  VALUE=79
+  ID=271320073  NAME=0x2C04:9  VALUE=71
+  ID=271320074  NAME=0x2C04:10  VALUE=64
+  ID=271320075  NAME=0x2C04:11  VALUE=58
+  ID=271320076  NAME=0x2C04:12  VALUE=54
+  ID=271320077  NAME=0x2C04:13  VALUE=50
+  ID=271320078  NAME=0x2C04:14  VALUE=47
+  ID=271320079  NAME=0x2C04:15  VALUE=45
+  ID=271320080  NAME=0x2C04:16  VALUE=43
+  ID=271320081  NAME=0x2C04:17  VALUE=42
+  ID=271320082  NAME=0x2C04:18  VALUE=1
+  ID=271320083  NAME=0x2C04:19  VALUE=0
+  ID=271320320  NAME=0x2C05:0  VALUE=5.3
+  ID=271320577  NAME=0x2C06:1  VALUE=0
+  ID=271320578  NAME=0x2C06:2  VALUE=100
+  ID=271320579  NAME=0x2C06:3  VALUE=100
+  ID=271320580  NAME=0x2C06:4  VALUE=100
+  ID=271320581  NAME=0x2C06:5  VALUE=200
+  ID=271320582  NAME=0x2C06:6  VALUE=100
+  ID=271320583  NAME=0x2C06:7  VALUE=353
+  ID=271320584  NAME=0x2C06:8  VALUE=83
+  ID=271320833  NAME=0x2C07:1  VALUE=124
+  ID=271320834  NAME=0x2C07:2  VALUE=120
+  ID=271320835  NAME=0x2C07:3  VALUE=114
+  ID=271320836  NAME=0x2C07:4  VALUE=108
+  ID=271320837  NAME=0x2C07:5  VALUE=102
+  ID=271320838  NAME=0x2C07:6  VALUE=97
+  ID=271320839  NAME=0x2C07:7  VALUE=93
+  ID=271320840  NAME=0x2C07:8  VALUE=89
+  ID=271320841  NAME=0x2C07:9  VALUE=86
+  ID=271320842  NAME=0x2C07:10  VALUE=83
+  ID=271320843  NAME=0x2C07:11  VALUE=81
+  ID=271320844  NAME=0x2C07:12  VALUE=79
+  ID=271320845  NAME=0x2C07:13  VALUE=77
+  ID=271320846  NAME=0x2C07:14  VALUE=75
+  ID=271320847  NAME=0x2C07:15  VALUE=73
+  ID=271320848  NAME=0x2C07:16  VALUE=72
+  ID=271320849  NAME=0x2C07:17  VALUE=71
+  ID=271321345  NAME=0x2C09:1  VALUE=100
+  ID=271321346  NAME=0x2C09:2  VALUE=100
+  ID=271321347  NAME=0x2C09:3  VALUE=100
+  ID=271321348  NAME=0x2C09:4  VALUE=100
+  ID=271321349  NAME=0x2C09:5  VALUE=100
+  ID=271321350  NAME=0x2C09:6  VALUE=100
+  ID=271321351  NAME=0x2C09:7  VALUE=100
+  ID=271321352  NAME=0x2C09:8  VALUE=100
+  ID=271321353  NAME=0x2C09:9  VALUE=100
+  ID=271321354  NAME=0x2C09:10  VALUE=100
+  ID=271321355  NAME=0x2C09:11  VALUE=100
+  ID=271321356  NAME=0x2C09:12  VALUE=100
+  ID=271321357  NAME=0x2C09:13  VALUE=100
+  ID=271321358  NAME=0x2C09:14  VALUE=100
+  ID=271321359  NAME=0x2C09:15  VALUE=100
+  ID=271321360  NAME=0x2C09:16  VALUE=100
+  ID=271321361  NAME=0x2C09:17  VALUE=100
+  ID=271321362  NAME=0x2C09:18  VALUE=0
+  ID=271323137  NAME=0x2C10:1  VALUE=80
+  ID=271323144  NAME=0x2C10:8  VALUE=5
+  ID=271324161  NAME=0x2C14:1  VALUE=0
+  ID=271324162  NAME=0x2C14:2  VALUE=0
+  ID=271324163  NAME=0x2C14:3  VALUE=0
+  ID=271324164  NAME=0x2C14:4  VALUE=0
+  ID=271324165  NAME=0x2C14:5  VALUE=0
+  ID=271324166  NAME=0x2C14:6  VALUE=0
+  ID=271324167  NAME=0x2C14:7  VALUE=0
+  ID=271324168  NAME=0x2C14:8  VALUE=0
+  ID=271324169  NAME=0x2C14:9  VALUE=0
+  ID=271401985  NAME=0x2D44:1  VALUE=8000
+  ID=271402497  NAME=0x2D46:1  VALUE=5.3
+  ID=271403265  NAME=0x2D49:1  VALUE=5
+  ID=271403267  NAME=0x2D49:3  VALUE=145
+  ID=271403268  NAME=0x2D49:4  VALUE=155
+  ID=271404033  NAME=0x2D4C:1  VALUE=96
+  ID=271404034  NAME=0x2D4C:2  VALUE=870
+  ID=271404035  NAME=0x2D4C:3  VALUE=27
+  ID=271404289  NAME=0x2D4D:1  VALUE=0
+  ID=271404290  NAME=0x2D4D:2  VALUE=70
+  ID=271404291  NAME=0x2D4D:3  VALUE=1
+  ID=271404292  NAME=0x2D4D:4  VALUE=100
+  ID=271404293  NAME=0x2D4D:5  VALUE=100
+  ID=271404294  NAME=0x2D4D:6  VALUE=100
+  ID=271404295  NAME=0x2D4D:7  VALUE=100
+  ID=271404296  NAME=0x2D4D:8  VALUE=100
+  ID=271405057  NAME=0x2D50:1  VALUE=1
+  ID=271405058  NAME=0x2D50:2  VALUE=105
+  ID=274756352  NAME=0x6073:0  VALUE=149.9
+  ID=274756864  NAME=0x6075:0  VALUE=1.5
+  ID=274757120  NAME=0x6076:0  VALUE=1.2
+  ID=274759680  NAME=0x6080:0  VALUE=6075
+  ID=274990080  NAME=0x6404:0  VALUE=Lenze
+Total en collection: 147
+
+------------------------------------------------------------
+ID SCAN: Drive_1  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Hijos: 2
+  -> Hijo: Drv_Axis_01_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_01_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_01_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  -> Hijo: Drv_Axis_01_Enc_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_01_Enc_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_01_Enc_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+
+============================================================
+DRIVE 2: Drv_Axis_02
+============================================================
+
+============================================================
+COLLECTION: Drive_2
+============================================================
+  ID=270532864  NAME=0x2001:0  VALUE=Drv_Axis_02
+Total en collection: 1
+
+------------------------------------------------------------
+ID SCAN: Drive_2  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Hijos: 2
+  -> Hijo: Drv_Axis_02_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_02_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_02_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  -> Hijo: Drv_Axis_02_Enc_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_02_Enc_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_02_Enc_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+
+============================================================
+DRIVE 3: Drv_Axis_03
+============================================================
+
+============================================================
+COLLECTION: Drive_3
+============================================================
+  ID=270532864  NAME=0x2001:0  VALUE=Drv_Axis_03
+Total en collection: 1
+
+------------------------------------------------------------
+ID SCAN: Drive_3  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Hijos: 2
+  -> Hijo: Drv_Axis_03_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_03_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_03_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  -> Hijo: Drv_Axis_03_Enc_Conn
+
+============================================================
+COLLECTION: Child_Drv_Axis_03_Enc_Conn
+============================================================
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Child_Drv_Axis_03_Enc_Conn  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+
+============================================================
+APPLICATION OBJECTS
+============================================================
+Objetos bajo Application: 5
+  Objeto: Library Manager
+
+============================================================
+COLLECTION: Axis_Library Manager
+============================================================
+  (error enumerando collection: 'ScriptObject' object has no attribute 'device_parameters')
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Axis_Library Manager  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Objeto: GVL_ComponentHardware
+
+============================================================
+COLLECTION: Axis_GVL_ComponentHardware
+============================================================
+  (error enumerando collection: 'ScriptObject' object has no attribute 'device_parameters')
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Axis_GVL_ComponentHardware  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Objeto: GVL_ComponentHardwareCall
+
+============================================================
+COLLECTION: Axis_GVL_ComponentHardwareCall
+============================================================
+  (error enumerando collection: 'ScriptObject' object has no attribute 'device_parameters')
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Axis_GVL_ComponentHardwareCall  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Objeto: PLC_PRG
+
+============================================================
+COLLECTION: Axis_PLC_PRG
+============================================================
+  (error enumerando collection: 'ScriptObject' object has no attribute 'device_parameters')
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Axis_PLC_PRG  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+  Objeto: Task Configuration
+
+============================================================
+COLLECTION: Axis_Task Configuration
+============================================================
+  (error enumerando collection: 'ScriptObject' object has no attribute 'device_parameters')
+Total en collection: 0
+
+------------------------------------------------------------
+ID SCAN: Axis_Task Configuration  (sub 1..3000)
+------------------------------------------------------------
+Total encontrados por ID: 0
+
+============================================================
+TODOS LOS OBJETOS CON PARAMETROS (scan rapido)
+============================================================
+OBJETO CON PARAMS: Device
+
+Done.

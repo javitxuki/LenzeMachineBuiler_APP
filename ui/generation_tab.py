@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from machine_builder_core import generate_plc_script, validate_config
+from ui.scroll_area import make_scroll_area
 
 
 DEFAULT_PLC_DESIGNER = Path(
@@ -53,7 +54,8 @@ class GenerationTab(QWidget):
         self._trace("INFO", "Pestaña de generación V0.8.1 iniciada", persist=False)
 
     def _build_ui(self):
-        root = QVBoxLayout(self)
+        container = QWidget()
+        root = QVBoxLayout(container)
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(12)
 
@@ -176,6 +178,14 @@ class GenerationTab(QWidget):
         help_label.setWordWrap(True)
         help_label.setStyleSheet("color:#5b6475;")
         root.addWidget(help_label)
+
+        # Dentro de un scroll area no hay estiramiento vertical: sin altura mínima
+        # la vista previa y la trazabilidad se colapsarían a unas pocas líneas.
+        self.preview.setMinimumHeight(280)
+        self.history_view.setMinimumHeight(280)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(make_scroll_area(container))
 
     @staticmethod
     def _path_row(line_edit, button):

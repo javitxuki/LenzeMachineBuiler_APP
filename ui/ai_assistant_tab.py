@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 
-from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
+from PySide6.QtCore import QObject, QSettings, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QGroupBox, QHBoxLayout, QLabel, QMessageBox,
     QPlainTextEdit, QPushButton, QTextBrowser, QVBoxLayout, QWidget
 )
 
+import ai_assistant
 from ai_parser import interpret, transcribe_audio
 from ui.voice_recorder import MicrophoneRecorder
+from ui.scroll_area import make_scroll_area
 
 
 class InterpretWorker(QObject):
@@ -31,19 +33,27 @@ class TranscriptionWorker(QObject):
     finished = Signal(str)
     failed = Signal(str)
 
-    def __init__(self, audio_bytes, engine):
+    def __init__(self, audio_bytes, engine, model=None, language=None):
         super().__init__()
         self.audio_bytes = audio_bytes
         self.engine = engine
+        self.model = model
+        self.language = language
 
     @Slot()
     def run(self):
         try:
             self.finished.emit(
-                transcribe_audio(self.audio_bytes, filename="machine_builder_voice.wav", engine=self.engine)
+                transcribe_audio(
+                    self.audio_bytes,
+                    filename="machine_builder_voice.wav",
+                    engine=self.engine,
+                    model=self.model,
+                    language=self.language,
+                )
             )
         except Exception as error:
-            self.failed.emit(str(error))
+            self.failed.emit(str(error) or type(error).__name__ or "Error desconocido")
 
 
 class AIAssistantTab(QWidget):
@@ -60,7 +70,8 @@ class AIAssistantTab(QWidget):
         self._build_ui()
 
     def _build_ui(self):
-        root = QVBoxLayout(self)
+        container = QWidget()
+        root = QVBoxLayout(container)
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(12)
 
@@ -102,7 +113,43 @@ class AIAssistantTab(QWidget):
         voice_row.addWidget(self.auto_interpret)
         voice_row.addStretch()
         chat_layout.addLayout(voice_row)
+
+        # Modelo Whisper e idioma de la transcripción (persisten en QSettings).
+        settings_row = QHBoxLayout()
+        settings_row.addWidget(QLabel("Modelo Whisper:"))
+        self.model_combo = QComboBox()
+        for model_name in ai_assistant.WHISPER_MODELS:
+            self.model_combo.addItem(model_name, model_name)
+        self.model_combo.setToolTip(
+            "Modelo local de transcripción. La primera vez que se usa uno nuevo "
+            "se descarga su modelo (puede tardar) y después se reutiliza."
+        )
+        settings_row.addWidget(self.model_combo)
+        settings_row.addSpacing(12)
+        settings_row.addWidget(QLabel("Idioma:"))
+        self.language_combo = QComboBox()
+        self.language_combo.addItem("Auto-detección", "")
+        self.language_combo.addItem("Español", "es")
+        self.language_combo.addItem("English", "en")
+        self.language_combo.addItem("Deutsch", "de")
+        settings_row.addWidget(self.language_combo)
+        settings_row.addStretch()
+        chat_layout.addLayout(settings_row)
         chat_layout.addWidget(self.recording_label)
+
+        self.settings = QSettings("Lenze", "MachineBuilderDesktop")
+        saved_model = self.settings.value("voice/model", "small", type=str)
+        self.model_combo.setCurrentIndex(
+            max(0, self.model_combo.findText(str(saved_model)))
+        )
+        saved_language = self.settings.value("voice/language", "", type=str)
+        self.language_combo.setCurrentIndex(
+            max(0, self.language_combo.findData(str(saved_language)))
+        )
+        self.model_combo.currentIndexChanged.connect(self._save_voice_settings)
+        self.language_combo.currentIndexChanged.connect(self._save_voice_settings)
+        self.engine_combo.currentIndexChanged.connect(self._voice_engine_changed)
+        self._voice_engine_changed()
 
         send_row = QHBoxLayout()
         self.source_label = QLabel("IA: OpenAI con respaldo local")
@@ -134,6 +181,14 @@ class AIAssistantTab(QWidget):
         proposal_layout.addLayout(actions)
         root.addWidget(proposal, 1)
 
+        # Dentro de un scroll area no hay estiramiento vertical: sin altura mínima
+        # el historial y la propuesta se colapsarían a unas pocas líneas.
+        self.history.setMinimumHeight(240)
+        self.proposal_text.setMinimumHeight(140)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(make_scroll_area(container))
+
     def start_recording(self):
         try:
             self.recorder.start()
@@ -155,7 +210,14 @@ class AIAssistantTab(QWidget):
             return
         self.stop_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
-        self.recording_label.setText("Transcribiendo audio...")
+        if self.engine_combo.currentData() == "local":
+            self.recording_label.setText(
+                "Transcribiendo audio con el modelo %s "
+                "(la primera vez con un modelo nuevo se descarga y tarda más)..."
+                % self.model_combo.currentData()
+            )
+        else:
+            self.recording_label.setText("Transcribiendo audio con OpenAI...")
         self.recording_label.setStyleSheet("color:#2446db;font-weight:600;")
         self._start_transcription(audio_bytes, self.engine_combo.currentData())
 
@@ -166,7 +228,12 @@ class AIAssistantTab(QWidget):
 
     def _start_transcription(self, audio_bytes, engine):
         self.thread = QThread(self)
-        self.worker = TranscriptionWorker(audio_bytes, engine)
+        self.worker = TranscriptionWorker(
+            audio_bytes,
+            engine,
+            model=self.model_combo.currentData(),
+            language=self.language_combo.currentData() or None,
+        )
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)
         self.worker.finished.connect(self._transcription_ready)
@@ -181,16 +248,44 @@ class AIAssistantTab(QWidget):
     def _transcription_ready(self, text):
         self.prompt.setPlainText(text)
         self.history.append(f"<b>Transcripción:</b> {self._html(text)}")
-        self.recording_label.setText("Transcripción completada.")
+        self.recording_label.setText(
+            "Transcripción completada." + self._transcription_details()
+        )
         self._reset_voice_controls(keep_status=True)
         if self.auto_interpret.isChecked():
             self.interpret_prompt()
+
+    def _transcription_details(self):
+        """Motor, modelo e idioma detectado de la última transcripción."""
+        info = dict(ai_assistant.LAST_TRANSCRIPTION_INFO)
+        details = []
+        language = str(info.get("language") or "")
+        if language:
+            probability = info.get("language_probability")
+            if isinstance(probability, (int, float)):
+                language += " (%.2f)" % probability
+            details.append("idioma: " + language)
+        if info.get("model"):
+            details.append("modelo: " + str(info["model"]))
+        if info.get("engine"):
+            details.append("motor: " + str(info["engine"]))
+        return (" · " + " · ".join(details)) if details else ""
+
+    def _save_voice_settings(self, *_):
+        self.settings.setValue("voice/model", self.model_combo.currentData())
+        self.settings.setValue("voice/language", self.language_combo.currentData())
+        self.settings.sync()
+
+    def _voice_engine_changed(self, *_):
+        # El selector de modelo solo aplica al motor local (Whisper).
+        self.model_combo.setEnabled(self.engine_combo.currentData() == "local")
 
     @Slot(str)
     def _transcription_failed(self, error):
         self.recording_label.setText("No se pudo transcribir.")
         self._reset_voice_controls(keep_status=True)
-        QMessageBox.warning(self, "Transcripción", error)
+        QMessageBox.warning(self, "Transcripción",
+                            str(error).strip() or "Error desconocido.")
 
     def _reset_voice_controls(self, keep_status=False):
         self.record_button.setEnabled(True)
